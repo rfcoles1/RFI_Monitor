@@ -4,8 +4,8 @@ Project used to identify sources of RFI
 Built using python3 
 
 Requirements:
-Numpy
-Tensorflow 
-sklearn 
-skimage
-matplotlib 
+numpy,
+tensorflow,
+sklearn,
+skimage,
+matplotlib

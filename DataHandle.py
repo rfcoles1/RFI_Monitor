@@ -6,8 +6,6 @@ import matplotlib.pyplot as plt
 from Config import Config
 config = Config()
 
-
-
 class ImgBuffer():
     def __init__(self):
         self.timer = [] #timer indicates how long ago the source was spotted/updated
@@ -27,14 +25,14 @@ class ImgBuffer():
         self.timer = [x+1 for x in self.timer]
    
     #add a new identification to the buffer 
-    def add(self, box, t):
+    def add(self, box, t,  x):
         self.timer.append(0)
         self.duration.append(1)
         self.appearances.append(1)
         self.first_detection.append(t + box[0] - box[2]/2)
         self.latest_detection.append(t + box[0] + box[2]/2)
-        self.min_freq.append(box[1] - box[3]/2)
-        self.max_freq.append(box[1] + box[3]/2)
+        self.min_freq.append(x + box[1] - box[3]/2)
+        self.max_freq.append(x + box[1] + box[3]/2)
 
     #removes one source based on index
     def remove(self, ind):
@@ -66,14 +64,14 @@ class ImgBuffer():
     """
     
     #when a new source is added, check against the buffer 
-    def process_new(self, boxes, t):
+    def process_new(self, boxes, t, x):
         for z in range(len(boxes)): 
             inbuffer = False #if this box doesn't match any in the buffer, this will stay false
             for j in range(len(self.timer)):   
-                new_minfreq = boxes[z][1] - boxes[z][3]/2
-                new_maxfreq = boxes[z][1] + boxes[z][3]/2
-                new_firstdet = t+boxes[z][0] - boxes[z][2]/2
-                new_lastdet = t+boxes[z][0] + boxes[z][2]/2
+                new_minfreq = x + boxes[z][1] - boxes[z][3]/2
+                new_maxfreq = x + boxes[z][1] + boxes[z][3]/2
+                new_firstdet = t + boxes[z][0] - boxes[z][2]/2
+                new_lastdet = t + boxes[z][0] + boxes[z][2]/2
                 
                 #compare the frequencies and the time of the two boxes
                 if compare_freq(self.min_freq[j], self.max_freq[j], new_minfreq, new_maxfreq) \
@@ -90,10 +88,10 @@ class ImgBuffer():
                     inbuffer = True
             
             if inbuffer == False:
-                self.add(boxes[z], t) #if not comparable to anything in buffer, add the source
+                self.add(boxes[z], t, x) #if not comparable to anything in buffer, add the source
     
     #process the current sources in the buffer
-    def process_existing(self, n):
+    def process_existing(self):
         z = 0 
         while z < self.len():
             if self.timer[z] > 8: #if the source has not been updated recently 
@@ -103,7 +101,16 @@ class ImgBuffer():
                 z -= 1
             z += 1
             
-
+    def clear_buffer(self):
+        z = 0
+        while z < self.len():
+            if self.appearances[z] > config.gridN*1:
+                self.final_array.append([self.first_detection[z], self.min_freq[z], self.latest_detection[z], self.max_freq[z]])
+                self.remove(z)     
+                z -= 1
+            z += 1    
+    
+            
 def process_pred(pred):
     boxes = true_position(pred)
     merged = merge_all(boxes)

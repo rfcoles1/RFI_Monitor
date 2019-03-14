@@ -6,6 +6,8 @@ import matplotlib.gridspec as gs
 from DataGen import *
 from DataHandle import *
 
+#this file needs reviewing, methods may be obsolete 
+
 def plot_25_ims(outlines = False): #plots a 5x5 grid of images as examples
     data, labels = make_data(25)
     fig, axs = plt.subplots(5,5, figsize=(10,10))

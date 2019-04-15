@@ -7,7 +7,14 @@ from Config import Config
 config = Config()
 
 class ImgBuffer():
+    """
+    Buffer that collects images from different frames
+    """
+    
     def __init__(self):
+        """
+        Initialise the data structures required
+        """
         self.timer = [] #timer indicates how long ago the source was spotted/updated
         self.duration = [] #how long the source has been in the buffer
         self.appearances = [] #how many times the source appeared 
@@ -19,13 +26,32 @@ class ImgBuffer():
         self.final_array = [] #temporary 
         
     def len(self):
+        """
+        Shortened method for obtaining the length of the buffer
+        """
         return len(self.timer)
     
     def update_timer(self):
+        """
+        Increases time step of all elements in buffer
+        """
         self.timer = [x+1 for x in self.timer]
    
-    #add a new identification to the buffer 
+
     def add(self, box, t,  x):
+        """
+        Add a new identification to the buffer
+        Parameters:
+            arg1: numpy.ndarray of size (4), dtype = np.float
+                A single bounding box
+            arg2: float
+                Time since start
+            arg3: float
+                Lowest frequency, i.e. left most side of the bounding box
+        Returns:
+            None
+        """
+    
         self.timer.append(0)
         self.duration.append(1)
         self.appearances.append(1)
@@ -34,8 +60,16 @@ class ImgBuffer():
         self.min_freq.append(x + box[1] - box[3]/2)
         self.max_freq.append(x + box[1] + box[3]/2)
 
-    #removes one source based on index
     def remove(self, ind):
+        """
+        Remove one source based on index
+        Parameters:
+            arg1: int
+                Index of the source to be removed
+        Returns:
+            None
+        """
+        
         self.timer.pop(ind)
         self.duration.pop(ind)
         self.appearances.pop(ind)
@@ -44,27 +78,21 @@ class ImgBuffer():
         self.min_freq.pop(ind)
         self.max_freq.pop(ind)
         
-    """
-    def process_new(self, img, boxes, t):
-        imgs = extract(img, boxes)
     
-        for z in range(len(imgs)):
-            inbuffer = False
-            for j in range(len(self.timer)):
-                m,s = compare_images(self.imgs[j], imgs[z])
-                if m < 1 and s > 0.5: #if the source is similar to another in the buffer
-                    #TO DO - merge the sources
-                    
-                    self.duration[j] += self.timer[j]
-                    self.timer[j] = 0 
-                    self.appearances[j] += 1
-                    inbuffer = True
-            if inbuffer == False:
-                self.add(imgs[z],boxes[z], t) #if not comparable to anything in buffer, add the source
-    """
-    
-    #when a new source is added, check against the buffer 
     def process_new(self, boxes, t, x):
+        """
+        When a new source is added, check against those in the buffer
+        Parameters:
+            arg1: list of boxes (_,4)
+                All the bounding boxes detected
+            arg2: float
+                Time since start
+            arg3: float
+                Lowest frequency, i.e. left most side of the bounding box
+        Returns:
+            None
+        """
+        
         for z in range(len(boxes)): 
             inbuffer = False #if this box doesn't match any in the buffer, this will stay false
             for j in range(len(self.timer)):   
@@ -92,6 +120,11 @@ class ImgBuffer():
     
     #process the current sources in the buffer
     def process_existing(self):
+        """
+        Iterates through all entries in the buffer
+        Checks if the source has not been updated recently and can be removed
+        """
+        
         z = 0 
         while z < self.len():
             if self.timer[z] > 8: #if the source has not been updated recently 
@@ -102,6 +135,9 @@ class ImgBuffer():
             z += 1
             
     def clear_buffer(self):
+        """
+        Clears the buffer at the end of a search, storing those that are persistant enough
+        """
         z = 0
         while z < self.len():
             if self.appearances[z] > config.gridN*1:
@@ -112,12 +148,21 @@ class ImgBuffer():
     
             
 def process_pred(pred):
+    """
+    Short form of the process a new predicted goes through
+    Gets the position of all boxes, relative to entire image.
+    Merges those that are in the same tile so that one box encompasses both
+    """
+    
     boxes = true_position(pred)
     merged = merge_all(boxes)
     return merged 
 
-#utility calculations    
-def IOU(box1, box2): #calculate the Intersection over Union
+def IOU(box1, box2): 
+    """
+    Calculate the Intersection Over Union
+    """
+    
     x1,y1,w1,h1 = box1[0],box1[1],box1[2],box1[3]
     x2,y2,w2,h2 = box2[0],box2[1],box2[2],box2[3]
     w_I = min(x1 + w1, x2 + w2) - max(x1, x2)
@@ -130,7 +175,11 @@ def IOU(box1, box2): #calculate the Intersection over Union
 
     return I / U
  
-def mse(img1, img2): #calculates mean squared error
+def mse(img1, img2): 
+    """
+    Calculate the Mean Squared Error
+    """
+    
     if img1.shape != img2.shape: #images need to be same shape
         return -1
     err = np.sum((img1.astype("float") - img2.astype("float")) ** 2)
@@ -138,7 +187,11 @@ def mse(img1, img2): #calculates mean squared error
     return err
 
     
-def true_position(pred): #returns middle of box and dimensions relative to entire image
+def true_position(pred):
+    """
+    Returns middle of box and dimensions relative to entire image
+    """
+    
     boxes = [] 
     for z in range(config.gridN**2):
         if pred[0][z][0] > config.filter_threshold:
@@ -151,8 +204,12 @@ def true_position(pred): #returns middle of box and dimensions relative to entir
             boxes.append([cx, cy, w, h]) 
     return boxes 
 
-#convert box coordinates 
+
 def box_to_corners(box):
+    """
+    Takes the center point and dimensions of a box and gives the corner coordinates
+    """
+    
     cx, cy, w, h = box
     x1 = cx - w/2
     y1 = cy - h/2
@@ -161,6 +218,10 @@ def box_to_corners(box):
     return np.array([x1, y1, x2, y2])
 
 def corners_to_box(corners):
+    """
+    Takes the corner coordinates and gives the center point and dimensions
+    """
+ 
     x1, y1, x2, y2 = corners
     cx = (x1 + x2)/2
     cy = (y1 + y2)/2
@@ -168,8 +229,11 @@ def corners_to_box(corners):
     h = abs(y2 - y1)
     return np.array([cx, cy, w, h])
 
-#merge two boxes    
 def merge_boxes(box1, box2):
+    """
+    Merge the coordinates of two boxes so that one will encompasses both
+    """
+    
     c1 = box_to_corners(box1)
     c2 = box_to_corners(box2)
     x1 = min(c1[0], c2[0])
@@ -178,8 +242,13 @@ def merge_boxes(box1, box2):
     y2 = max(c1[3], c2[3])
     return corners_to_box([x1,y1,x2,y2])
 
-#WIP - Identify all boxes that overlap 
+    
 def identify_overlap(boxes):
+    """
+    WIP 
+    Identify all boxes that overlap 
+    """ 
+
     overlaps = []
     for i in range(len(boxes)):
         this_overlap = []
@@ -189,8 +258,13 @@ def identify_overlap(boxes):
         overlaps.append(this_overlap)
     return overlaps
 
-#WIP - merge any boxes that overlap 
+    
 def merge_all(boxes):
+    """
+    WIP 
+    Merge any boxes that overlap 
+    """
+    
     overlaps = identify_overlap(boxes)
     merged = []
     for i in range(len(overlaps)):
@@ -203,9 +277,14 @@ def merge_all(boxes):
                 curr = (merge_boxes(curr, boxes[overlaps[i][j]]))
             merged.append(curr)
     return merged
-        
-#isolates the predicted source from the image
+    
+    
+
 def extract(img, boxes): 
+    """
+    Isolate the predicted source from the image 
+    """
+    
     img = np.reshape(img, [config.L, config.L]) #assumes one image
 
     imgs = []
@@ -220,11 +299,19 @@ def extract(img, boxes):
     return imgs
     
     
-#resize the img to a set size, allows direct comparison    
 def standardize(img, size = 8):
+    """
+    Resize the img to a set size, allows direct comparison    
+    Not in use
+    """
     return resize(img, (size,size), anti_aliasing = True, mode = 'constant') 
 
 def compare_images(img1, img2):
+    """
+    Compares two images in two metrics, MSE and Structural similarity
+    Not in use
+    """
+   
     img1 = standardize(img1)
     img2 = standardize(img2)
     m = mse(img1, img2) #0 implies every pixel is the same between images
@@ -233,6 +320,10 @@ def compare_images(img1, img2):
     
     
 def compare_time(t1first, t1last, t2first, t2last):
+    """
+    Compares the time ranges of two boxes. 
+    If they are within a set range, return true.
+    """
     dif = 16
     if t2last < (t1first - dif) or t2first > (t1last + dif): 
         return False
@@ -240,6 +331,10 @@ def compare_time(t1first, t1last, t2first, t2last):
         return True  
         
 def compare_freq(f1low, f1high, f2low, f2high):
+    """
+    Compares the frequency ranges of two boxes. 
+    If they are within a set range, return true.
+    """
     dif = 2
     if f2high < (f1low - dif) or f2low > (f1high + dif): 
         return False

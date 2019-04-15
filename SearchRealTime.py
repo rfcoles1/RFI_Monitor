@@ -1,15 +1,13 @@
-from DataGen import *
-from Helper import *
-from Config import Config
-from Net import Network
-from Plotting import *
-from DataHandle import *
-config = Config()
-
 import zmq
 import time 
 import os 
 import sys
+
+from Config import Config
+from Net import Network
+from DataHandle import *
+config = Config()
+
 
 def main():
     file_name = 'tmp'

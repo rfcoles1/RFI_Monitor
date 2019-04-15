@@ -1,22 +1,27 @@
-from DataGen import *
-from Helper import *
+import sys 
+import numpy as np
+
 from Config import Config
 from Net import Network
-from Plotting import *
 from DataHandle import *
 config = Config()
 
 def main(file_name):
+    
+    try:
+        data = np.load('Data/' + str(file_name) + '.npy')
+        data = np.clip(data,0,5)/5
+    except:
+        print("Invalid File Name")
+        return
+    
     net = Network()
     net.load()
-
-    data = np.load(str(file_name) + '.npy')
-    data = np.clip(data,0,5)/5
-    
+ 
     f = open('Detections_' + str(file_name) + '.txt', 'a')
     
-    for x in np.arange(0, np.shape(data)[1]-32,32):
-        c = data[:, x:x+32]
+    for x in np.arange(0, np.shape(data)[1]-config.L,config.L):
+        c = data[:, x:x+config.L]
 
         buffer = ImgBuffer()
         for n in range(np.shape(c)[0]-config.L):
@@ -35,4 +40,7 @@ def main(file_name):
     f.close()    
         
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) == 2:
+        main(sys.argv[1])
+    else:
+        print("Need one argument for file name")

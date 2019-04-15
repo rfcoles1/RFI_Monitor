@@ -31,5 +31,5 @@ Built using python3.6.7
 Rory Coles 
 
 # Acknowledgments
-RFI-Group at DRAO
-Code from Kyle Mills was used in tiling the images 
+RFI-Group at DRAO.
+Code from Kyle Mills was used in tiling the images.

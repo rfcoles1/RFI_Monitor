@@ -5,6 +5,11 @@ A tool used for assisting observatory staff monitor Radio Frequency Interference
 Many sources of man-made interference can be observed around the site, to which the telescopes are very sensitive to.
 Previous attempts at interference monitoring have been limited to surveys covering a specific time range or instruments which have produced more data than could be digested by limited personnel resources. We want a system that can handle the volume of data produced and assist observatory staff in identifying and finding the source.
 
+# To Install:
+```bash
+pip install ./
+```
+
 # Demonstration
 See Video_Demo.ipynb for an example.
 
@@ -27,3 +32,4 @@ Rory Coles
 
 # Acknowledgments
 RFI-Group at DRAO
+Code from Kyle Mills was used in tiling the images 

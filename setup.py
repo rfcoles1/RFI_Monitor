@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys
 
-setup(name='RFI_Localisation')
+setup(name='RFI_Localisation',
     install_requires=[
     'numpy',
     'scipy',
